@@ -1,12 +1,12 @@
-﻿using Arkko.MomoTalk.OneBot.Events;
-using Arkko.MomoTalk.OneBot.Messages;
-using Arkko.MomoTalk.OneBot.Models;
-using Arkko.MomoTalk.Utils;
+﻿using Arkko.MomoTalk.Foundation.Utils;
+using Arkko.MomoTalk.Hosting;
+using Arkko.MomoTalk.OneBot.Protocol.Events;
+using Arkko.MomoTalk.OneBot.Protocol.Messages;
+using Arkko.MomoTalk.OneBot.Protocol.Models;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Net.WebSockets;
-using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 
@@ -30,7 +30,7 @@ public class OneBotClient : IDisposable, IAsyncDisposable {
     /// </summary>
     private TaskCompletionSource _connectionTask;
 
-    private Task _handleMessageEventTask;
+    private readonly MessagePacker _messagePacker;
 
     private readonly ConcurrentDictionary<string, ApiTask> _apiTasks;
 
@@ -38,7 +38,7 @@ public class OneBotClient : IDisposable, IAsyncDisposable {
 
     public OneBotApi Apis { get; }
 
-    public IMomoTalk OuterBot { get; }
+    public OneBotEventHandlerRepository EventHandlers { get; }
 
     public OneBotClient(
         string url,
@@ -48,16 +48,16 @@ public class OneBotClient : IDisposable, IAsyncDisposable {
         TimeSpan retryRest,
         TimeSpan wsHeartbeat,
         ILoggerFactory loggerFactory,
-        IMomoTalk outerBot
+        MomoTalk outerBot
     ) {
         Apis = new OneBotApi(this);
-        OuterBot = outerBot;
+        EventHandlers = new OneBotEventHandlerRepository(outerBot, loggerFactory);
 
         _client = new ClientWebSocket();
         _logger = loggerFactory.CreateLogger<OneBotClient>();
         _apiTasks = new ConcurrentDictionary<string, ApiTask>();
         _connectionTask = new TaskCompletionSource();
-        _handleMessageEventTask = Task.CompletedTask;
+        _messagePacker = new MessagePacker(loggerFactory);
         _uri = new Uri(url);
         _retryTimes = retryTimes;
         _retryWait = retryWait;
@@ -89,7 +89,7 @@ public class OneBotClient : IDisposable, IAsyncDisposable {
                 break;
             } catch (Exception e) when (e is OperationCanceledException or WebSocketException) {
                 ResetClientWebSocket();
-                
+
                 if (i < _retryTimes) {
                     if (_logger.IsEnabled(LogLevel.Warning)) {
                         _logger.LogWarning(
@@ -118,7 +118,7 @@ public class OneBotClient : IDisposable, IAsyncDisposable {
 
         _connectionTask.TrySetResult();
 
-        _handleMessageEventTask = LoopHandleMessageEventAsync();
+        _ = LoopHandleMessageEventAsync();
     }
 
     public async Task CloseAsync() {
@@ -139,7 +139,7 @@ public class OneBotClient : IDisposable, IAsyncDisposable {
         for (;;) {
             try {
                 await HandleMessageEventAsync();
-            } catch (OperationCanceledException ex) {
+            } catch (OperationCanceledException) {
                 break;
             } catch (Exception ex) {
                 if (_logger.IsEnabled(LogLevel.Error)) {
@@ -150,38 +150,20 @@ public class OneBotClient : IDisposable, IAsyncDisposable {
     }
 
     private async Task HandleMessageEventAsync() {
-        /*
-         * {
-         * "time":1761035342,
-         * "self_id":2608770999,
-         * "post_type":"meta_event",
-         * "meta_event_type":"lifecycle",
-         * "sub_type":"connect"
-         * }
-         */
         ArraySegment<byte> buffer = new(new byte[1024 * 4]);
 
-        WebSocketReceiveResult result = await _client.ReceiveAsync(
-            buffer,
-            CancellationToken.None
-        );
-        
-        Stopwatch watch = new Stopwatch();
+        WebSocketReceiveResult result = await _client.ReceiveAsync(buffer, CancellationToken.None);
+
+        Stopwatch watch = new();
         watch.Start();
 
         if (result.MessageType == WebSocketMessageType.Close) {
             // schedule new attempts to connect?
             if (_logger.IsEnabled(LogLevel.Warning)) {
-                _logger.LogWarning("websocket connection closed by server");
+                _logger.LogWarning("websocket connection closed");
             }
 
             _connectionTask = new TaskCompletionSource();
-
-            await _client.CloseAsync(
-                WebSocketCloseStatus.NormalClosure,
-                "closed by server",
-                CancellationToken.None
-            );
         } else if (result.MessageType == WebSocketMessageType.Text) {
             string message = Encoding.UTF8.GetString(
                 buffer.Array ?? [],
@@ -196,83 +178,61 @@ public class OneBotClient : IDisposable, IAsyncDisposable {
             JsonElement json = JsonDocument.Parse(message).RootElement;
 
             if (json.TryGetProperty("post_type", out JsonElement _)) {
-                HandleEvent(json);
+                HandleEvent(in json);
             } else {
                 HandleApiRequest(json);
             }
         }
-        
+
         watch.Stop();
-        
+
         if (_logger.IsEnabled(LogLevel.Trace)) {
             _logger.LogTrace("message handling elapsed: {} sec", watch.Elapsed.TotalSeconds);
         }
     }
 
-    private void HandleEvent(JsonElement json) {
+    private void HandleEvent(in JsonElement json) {
+        EventBase? ev = null;
+
         string? postType = json.GetProperty("post_type").GetString();
-        
+
         if (postType == "message") {
             string? messageType = json.GetProperty("message_type").GetString();
-            
+
             if (messageType == "private") {
-                EventMessagePrivate ev = json.Deserialize<EventMessagePrivate>(JsonOptions.SnakeCaseInstance)!;
+                EventMessagePrivate emp = json.Deserialize<EventMessagePrivate>(JsonOptions.SnakeCaseInstance)!;
 
-                ParseMessageChain(ev, json);
+                emp.Message = _messagePacker.UnpackArrayMessages(emp, json.GetProperty("message"));
 
-                PrivateMessageEvent?.Invoke(OuterBot, ev);  
+                emp.QuickOptInvoker = async o => await Apis.HandleQuickOperation(emp, o);
+
+                ev = emp;
             } else if (messageType == "group") {
-                EventMessageGroup ev = json.Deserialize<EventMessageGroup>(JsonOptions.SnakeCaseInstance)!;
+                EventMessageGroup emg = json.Deserialize<EventMessageGroup>(JsonOptions.SnakeCaseInstance)!;
 
-                ParseMessageChain(ev, json);
+                emg.Message = _messagePacker.UnpackArrayMessages(emg, json.GetProperty("message"));
 
-                GroupMessageEvent?.Invoke(OuterBot, ev);
+                emg.QuickOptInvoker = async o => await Apis.HandleQuickOperation(emg, o);
+                
+                ev = emg;
             }
         } else if (postType == "meta_event") {
             string? metaEventType = json.GetProperty("meta_event_type").GetString();
 
             if (metaEventType == "lifecycle") {
-                
+                string? subType =  json.GetProperty("sub_type").GetString();
+
+                if (subType == "connect") {
+                    ev = json.Deserialize<EventConnect>(JsonOptions.SnakeCaseInstance)!;
+                }
             } else if (metaEventType == "heartbeat") {
-                EventHeartbeat ev = json.Deserialize<EventHeartbeat>(JsonOptions.SnakeCaseInstance)!;
-                
-                HeartbeatsEvent?.Invoke(OuterBot, ev);
-            }
-        }
-    }
-
-    private static void ParseMessageChain(EventMessage ev, JsonElement json) {
-        MessageChainBuilder builder = MessageChain.Builder;
-
-        foreach (JsonElement message in json.GetProperty("message").EnumerateArray()) {
-            string type = message.GetProperty("type").GetString() ?? "";
-            JsonElement data = message.GetProperty("data");
-
-            switch (type) {
-            case "text":
-                builder.Append(new ObText(data.GetProperty("text").GetString() ?? ""));
-
-                break;
-            case "image":
-                ObImage image = new() {
-                    File = data.GetProperty("file").GetString() ?? "",
-                    Type = data.GetPropertyOrNull("type")?.GetString(),
-                    Url = data.GetProperty("url").GetString() ?? "",
-                };
-
-                builder.Append(image);
-
-                break;
-            case "at":
-                ObAt at = new(data.GetProperty("qq").GetInt64());
-                
-                builder.Append(at);
-                
-                break;
+                ev = json.Deserialize<EventHeartbeat>(JsonOptions.SnakeCaseInstance)!;
             }
         }
 
-        ev.Message = builder.Build();
+        if (ev != null) {
+            EventHandlers.PostEvent(ev);
+        }
     }
 
     private void HandleApiRequest(JsonElement json) {
@@ -316,27 +276,4 @@ public class OneBotClient : IDisposable, IAsyncDisposable {
         _client.Dispose();
         return ValueTask.CompletedTask;
     }
-
-    public event OneBotEventHandler<EventMessagePrivate>? PrivateMessageEvent;
-    public event OneBotEventHandler<EventMessageGroup>? GroupMessageEvent;
-    
-    public event OneBotEventHandler<EventConnect>? ConnectEvent;
-    public event OneBotEventHandler<EventOneBotDisable>? OneBotDisableEvent;
-    public event OneBotEventHandler<EventOneBotEnable>? OneBotEnableEvent;
-    public event OneBotEventHandler<EventHeartbeat>? HeartbeatsEvent;
-    
-    public event OneBotEventHandler<EventFriendAdd>? FriendAddEvent;
-    public event OneBotEventHandler<EventFriendRecall>? FriendRecallEvent;
-    public event OneBotEventHandler<EventGroupAdmin>? GroupAdminsEvent;
-    public event OneBotEventHandler<EventGroupBan>? GroupBansEvent;
-    public event OneBotEventHandler<EventGroupDecrease>? GroupDecreaseEvent;
-    public event OneBotEventHandler<EventGroupHonorChange>? GroupHonorChangeEvent;
-    public event OneBotEventHandler<EventGroupIncrease>? GroupIncreaseEvent;
-    public event OneBotEventHandler<EventGroupLuckyKing>? GroupLuckyKingEvent;
-    public event OneBotEventHandler<EventGroupPoke>? GroupPokeEvent;
-    public event OneBotEventHandler<EventGroupRecall>? GroupRecallEvent;
-    public event OneBotEventHandler<EventGroupUpload>? GroupUploadEvent;
-    
-    public event OneBotEventHandler<EventRequestFriend>? RequestFriendEvent;
-    public event OneBotEventHandler<EventRequestGroup>? RequestGroupEvent;
 }

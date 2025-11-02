@@ -1,4 +1,4 @@
-﻿using Arkko.MomoTalk.Utils;
+﻿using Arkko.MomoTalk.Foundation.Utils;
 using System.Text.Json;
 
 namespace Arkko.MomoTalk.OneBot;

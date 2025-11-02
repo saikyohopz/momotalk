@@ -1,29 +1,25 @@
-﻿using Arkko.MomoTalk.OneBot.Enums;
-using Arkko.MomoTalk.OneBot.Events;
-using Arkko.MomoTalk.OneBot.Messages;
-using Arkko.MomoTalk.OneBot.Models;
+﻿using Arkko.MomoTalk.OneBot.Protocol.Enums;
+using Arkko.MomoTalk.OneBot.Protocol.Events;
+using Arkko.MomoTalk.OneBot.Protocol.Messages;
+using Arkko.MomoTalk.OneBot.Protocol.Models;
 
 namespace Arkko.MomoTalk.OneBot;
 
 public class OneBotApi(OneBotClient client) {
-    internal OneBotClient Client => client;
-
-    public async Task<ObMessageId> SendPrivateMessage(long userId, MessageChain messageChain, bool autoEscape = false) {
-        return await Client.SendApiRequestAsync<ObMessageId>(
+    public async Task<ObMessageId> SendPrivateMessage(long userId, MessageChain messageChain) {
+        return await client.SendApiRequestAsync<ObMessageId>(
             new ApiRequest("send_private_msg", new {
                 UserId = userId,
-                Message = messageChain.ToArrayMessages(),
-                AutoEscape = autoEscape,
+                Message = MessagePacker.PackArrayMessages(messageChain),
             })
         );
     }
 
-    public async Task<ObMessageId> SendGroupMessage(long groupId, MessageChain messageChain, bool autoEscape = false) {
-        return await Client.SendApiRequestAsync<ObMessageId>(
+    public async Task<ObMessageId> SendGroupMessage(long groupId, MessageChain messageChain) {
+        return await client.SendApiRequestAsync<ObMessageId>(
             new ApiRequest("send_group_msg", new {
                 GroupId = groupId,
-                Message = messageChain.ToArrayMessages(),
-                AutoEscape = autoEscape,
+                Message = MessagePacker.PackArrayMessages(messageChain),
             })
         );
     }
@@ -31,12 +27,12 @@ public class OneBotApi(OneBotClient client) {
     public async Task<ObMessageId> SendMessage(
         MessageType messageType, long userId, long groupId, MessageChain messageChain, bool autoEscape = false
     ) {
-        return await Client.SendApiRequestAsync<ObMessageId>(
+        return await client.SendApiRequestAsync<ObMessageId>(
             new ApiRequest("send_msg", new {
                 MessageType = messageType.ToString().ToLower(),
                 UserId = userId,
                 GroupId = groupId,
-                Message = messageChain.ToArrayMessages(),
+                Message = MessagePacker.PackArrayMessages(messageChain),
                 AutoEscape = autoEscape,
             })
         );
@@ -75,7 +71,7 @@ public class OneBotApi(OneBotClient client) {
     public async Task SetGroupAddRequest() { }
 
     public async Task<ObLoginInfo> GetLoginInfo() {
-        return await Client.SendApiRequestAsync<ObLoginInfo>(
+        return await client.SendApiRequestAsync<ObLoginInfo>(
             new ApiRequest("get_login_info", null)
         );
     }
@@ -89,7 +85,7 @@ public class OneBotApi(OneBotClient client) {
     public async Task GetGroupList() { }
 
     public async Task<ObGroupMemberInfo> GetGroupMemberInfo(long groupId, long userId, bool noCache = false) {
-        return await Client.SendApiRequestAsync<ObGroupMemberInfo>(
+        return await client.SendApiRequestAsync<ObGroupMemberInfo>(
             new ApiRequest("get_group_member_info", new {
                 GroupId = groupId,
                 UserId = userId,
@@ -117,13 +113,13 @@ public class OneBotApi(OneBotClient client) {
     public async Task CanSendRecord() { }
 
     public async Task<T> GetStatus<T>() where T : ObConnectionStatus {
-        return await Client.SendApiRequestAsync<T>(
+        return await client.SendApiRequestAsync<T>(
             new ApiRequest("get_status", null)
         );
     }
 
     public async Task<T> GetVersionInfo<T>() where T : ObVersionInfo {
-        return await Client.SendApiRequestAsync<T>(
+        return await client.SendApiRequestAsync<T>(
             new ApiRequest("get_version_info", null)
         );
     }
@@ -133,12 +129,27 @@ public class OneBotApi(OneBotClient client) {
     public async Task CleanCache() { }
 
     public async Task HandleQuickOperation<TEvent>(TEvent context, object operation)
-    where TEvent : Event {
-        await Client.SendApiRequestAsync<object>(
+    where TEvent : EventBase {
+        await client.SendApiRequestAsync<object>(
             new ApiRequest(".handle_quick_operation", new {
                 Context = context,
                 Operation = operation,
             })
         );
     }
+
+#region napcat-only stuff
+    public async Task FriendPoke(long userId) {
+        await client.SendApiRequestAsync<object>(new ApiRequest("friend_poke", new {
+            UserId = userId,
+        }), true);
+    }
+    
+    public async Task GroupPoke(long groupId, long userId) {
+        await client.SendApiRequestAsync<object>(new ApiRequest("friend_poke", new {
+            GroupId = groupId,
+            UserId = userId,
+        }), true);
+    }
+#endregion
 }

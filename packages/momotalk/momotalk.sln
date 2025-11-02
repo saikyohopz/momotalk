@@ -7,6 +7,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Arkko.MomoTalk", "..\Arkko.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Arkko.MomoTalk.Example", "..\Arkko.MomoTalk.Example\Arkko.MomoTalk.Example.csproj", "{A63B9056-B80C-4587-AAB1-3E4BBFB4F49B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Arkko.MomoTalk.OneBot.Protocol", "..\Arkko.MomoTalk.OneBot.Protocol\Arkko.MomoTalk.OneBot.Protocol.csproj", "{B13284D9-3010-42F3-B0F6-66C31480C9E1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Arkko.MomoTalk.Foundation", "..\Arkko.MomoTalk.Foundation\Arkko.MomoTalk.Foundation.csproj", "{DB74F271-852E-4D6D-919D-B42F4E66FAC5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -41,6 +45,30 @@ Global
 		{A63B9056-B80C-4587-AAB1-3E4BBFB4F49B}.Release|x64.Build.0 = Release|Any CPU
 		{A63B9056-B80C-4587-AAB1-3E4BBFB4F49B}.Release|x86.ActiveCfg = Release|Any CPU
 		{A63B9056-B80C-4587-AAB1-3E4BBFB4F49B}.Release|x86.Build.0 = Release|Any CPU
+		{B13284D9-3010-42F3-B0F6-66C31480C9E1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B13284D9-3010-42F3-B0F6-66C31480C9E1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B13284D9-3010-42F3-B0F6-66C31480C9E1}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{B13284D9-3010-42F3-B0F6-66C31480C9E1}.Debug|x64.Build.0 = Debug|Any CPU
+		{B13284D9-3010-42F3-B0F6-66C31480C9E1}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{B13284D9-3010-42F3-B0F6-66C31480C9E1}.Debug|x86.Build.0 = Debug|Any CPU
+		{B13284D9-3010-42F3-B0F6-66C31480C9E1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B13284D9-3010-42F3-B0F6-66C31480C9E1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B13284D9-3010-42F3-B0F6-66C31480C9E1}.Release|x64.ActiveCfg = Release|Any CPU
+		{B13284D9-3010-42F3-B0F6-66C31480C9E1}.Release|x64.Build.0 = Release|Any CPU
+		{B13284D9-3010-42F3-B0F6-66C31480C9E1}.Release|x86.ActiveCfg = Release|Any CPU
+		{B13284D9-3010-42F3-B0F6-66C31480C9E1}.Release|x86.Build.0 = Release|Any CPU
+		{DB74F271-852E-4D6D-919D-B42F4E66FAC5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DB74F271-852E-4D6D-919D-B42F4E66FAC5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DB74F271-852E-4D6D-919D-B42F4E66FAC5}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{DB74F271-852E-4D6D-919D-B42F4E66FAC5}.Debug|x64.Build.0 = Debug|Any CPU
+		{DB74F271-852E-4D6D-919D-B42F4E66FAC5}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{DB74F271-852E-4D6D-919D-B42F4E66FAC5}.Debug|x86.Build.0 = Debug|Any CPU
+		{DB74F271-852E-4D6D-919D-B42F4E66FAC5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DB74F271-852E-4D6D-919D-B42F4E66FAC5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DB74F271-852E-4D6D-919D-B42F4E66FAC5}.Release|x64.ActiveCfg = Release|Any CPU
+		{DB74F271-852E-4D6D-919D-B42F4E66FAC5}.Release|x64.Build.0 = Release|Any CPU
+		{DB74F271-852E-4D6D-919D-B42F4E66FAC5}.Release|x86.ActiveCfg = Release|Any CPU
+		{DB74F271-852E-4D6D-919D-B42F4E66FAC5}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
