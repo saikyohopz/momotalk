@@ -6,12 +6,14 @@ using Arkko.MomoTalk.OneBot.Protocol.Models;
 namespace Arkko.MomoTalk.OneBot;
 
 public class OneBotApi(OneBotClient client) {
+    internal OneBotClient Client => client;
+    
     public async Task<ObMessageId?> SendPrivateMessage(long userId, MessageChain messageChain) {
         return await client.SendApiRequestAsync<ObMessageId?>(
             new ApiRequest("send_private_msg", new {
                 UserId = userId,
                 Message = MessagePacker.PackArrayMessages(messageChain),
-            })
+            }), true
         );
     }
 
@@ -20,7 +22,7 @@ public class OneBotApi(OneBotClient client) {
             new ApiRequest("send_group_msg", new {
                 GroupId = groupId,
                 Message = MessagePacker.PackArrayMessages(messageChain),
-            })
+            }), true
         );
     }
 
@@ -34,7 +36,7 @@ public class OneBotApi(OneBotClient client) {
                 GroupId = groupId,
                 Message = MessagePacker.PackArrayMessages(messageChain),
                 AutoEscape = autoEscape,
-            })
+            }), true
         );
     }
 
@@ -137,19 +139,4 @@ public class OneBotApi(OneBotClient client) {
             })
         );
     }
-
-#region napcat-only stuff
-    public async Task FriendPoke(long userId) {
-        await client.SendApiRequestAsync<object>(new ApiRequest("friend_poke", new {
-            UserId = userId,
-        }), true);
-    }
-    
-    public async Task GroupPoke(long groupId, long userId) {
-        await client.SendApiRequestAsync<object>(new ApiRequest("friend_poke", new {
-            GroupId = groupId,
-            UserId = userId,
-        }), true);
-    }
-#endregion
 }
