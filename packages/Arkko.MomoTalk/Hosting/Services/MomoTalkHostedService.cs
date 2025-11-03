@@ -1,5 +1,4 @@
-﻿using Arkko.MomoTalk.Boot;
-using Microsoft.Extensions.Hosting;
+﻿using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
 namespace Arkko.MomoTalk.Hosting.Services;
@@ -9,10 +8,7 @@ public class MomoTalkHostedService(
     BotCollectionService botCollectionService
 ) : IHostedService {
     public Task StartAsync(CancellationToken cancellationToken) {
-        botCollectionService.CreateBot(new MomoTalkConfig("ws://arkko.cc:32008") {
-            Token = "saikyo",
-            LoggerFactory = loggerFactory,
-        });
+        botCollectionService.ConnectAll();
         
         return Task.CompletedTask;
     }

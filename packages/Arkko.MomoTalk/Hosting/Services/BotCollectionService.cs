@@ -1,15 +1,15 @@
-﻿using Arkko.MomoTalk.Boot;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
 
 namespace Arkko.MomoTalk.Hosting.Services;
 
-[Singleton]
 public class BotCollectionService {
-    private readonly ConcurrentDictionary<long, MomoTalk> _bots = [];
-    
+    private readonly ConcurrentBag<MomoTalk> _registeredBots = [];
+
+    private readonly ConcurrentDictionary<long, MomoTalk> _connectedBots = [];
+
     private readonly ILoggerFactory _loggerFactory;
-    
+
     private readonly IServiceProvider _serviceProvider;
 
     public BotCollectionService(ILoggerFactory loggerFactory, IServiceProvider serviceProvider) {
@@ -17,43 +17,49 @@ public class BotCollectionService {
         _serviceProvider = serviceProvider;
     }
 
-    public void CreateBot(params MomoTalkConfig[] configs) {
-        Task[] tasks = new Task[configs.Length];
+    public void ConnectAll() {
+        List<Task> tasks = new(_registeredBots.Count);
 
-        for (int i = 0; i < configs.Length; i++) {
-            MomoTalk momoTalk = new(configs[i]);
-
-            momoTalk.OneBot.EventHandlers.RegisterEventHandlerByAttribute(_serviceProvider);
-
-            tasks[i] = Task.Run(async () => {
+        tasks.AddRange(_registeredBots.Select(momoTalk => Task.Run(async () => {
+            if (!momoTalk.IsConnected) {
                 await momoTalk.ConnectAsync();
-                _bots[momoTalk.BotId] = momoTalk;
-            });
-        }
-        
+                _connectedBots[momoTalk.BotId] = momoTalk;
+            }
+        })));
+
         Task.WaitAll(tasks);
     }
 
+    public void CreateBot(params MomoTalkConfig[] configs) {
+        foreach (MomoTalkConfig config in configs) {
+            MomoTalk momoTalk = new(config, _loggerFactory);
+
+            momoTalk.OneBot.EventHandlers.RegisterEventHandlerByAttribute(_serviceProvider);
+
+            _registeredBots.Add(momoTalk);
+        }
+    }
+
     public MomoTalk GetBot(long botId) {
-        return _bots[botId];
+        return _connectedBots[botId];
     }
 
     public void CloseAll() {
-        Task[] tasks = new Task[_bots.Count];
+        Task[] tasks = new Task[_connectedBots.Count];
 
-        for (int i = 0; i < _bots.Count; i++) {
-            MomoTalk bot = _bots[i];
-            
+        for (int i = 0; i < _connectedBots.Count; i++) {
+            MomoTalk bot = _connectedBots[i];
+
             tasks[i] = Task.Run(async () => {
                 await bot.CloseAsync();
-                _bots.Remove(bot.BotId, out _);
+                _connectedBots.Remove(bot.BotId, out _);
             });
         }
-        
+
         Task.WaitAll(tasks);
     }
 
     public ICollection<MomoTalk> GetAllBots() {
-        return _bots.Values;
+        return _connectedBots.Values;
     }
 }

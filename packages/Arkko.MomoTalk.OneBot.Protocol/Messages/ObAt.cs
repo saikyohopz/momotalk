@@ -10,7 +10,7 @@ public class ObAt : MessageBase {
 
     public long UserId { get; set; } = -1;
 
-    public ObAt() { }
+    internal ObAt() { }
 
     public ObAt(long userId) {
         UserId = userId;

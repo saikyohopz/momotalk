@@ -1,8 +1,7 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
-namespace Arkko.MomoTalk.Boot;
+namespace Arkko.MomoTalk;
 
 public class MomoTalkConfig {
     public string Token = string.Empty;
@@ -14,8 +13,6 @@ public class MomoTalkConfig {
     public TimeSpan RetryRest = TimeSpan.FromSeconds(30);
 
     public TimeSpan WebSocketHeartbeat = TimeSpan.FromSeconds(60);
-
-    public ILoggerFactory LoggerFactory = new NullLoggerFactory();
     
     public string WebSocketUrl { get; set; }
 

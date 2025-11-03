@@ -98,6 +98,10 @@ public class OneBotClient : IDisposable, IAsyncDisposable {
                         );
                     }
                 } else {
+                    if (_retryRest == TimeSpan.Zero) {
+                        throw new WebSocketException($"connection failed after {_retryTimes} retries");
+                    }
+                    
                     if (_logger.IsEnabled(LogLevel.Error)) {
                         _logger.LogError(
                             "connection failed after {max} retries, retry scheduled after {rest} seconds",
@@ -122,6 +126,10 @@ public class OneBotClient : IDisposable, IAsyncDisposable {
     }
 
     public async Task CloseAsync() {
+        if (!IsConnected) {
+            return;
+        }
+        
         if (_logger.IsEnabled(LogLevel.Information)) {
             _logger.LogInformation("websocket connection closed by client");
         }

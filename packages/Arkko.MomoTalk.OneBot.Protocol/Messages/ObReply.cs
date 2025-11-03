@@ -7,6 +7,8 @@ public class ObReply : MessageBase {
     internal override string TypeId => "reply";
 
     public string Id { get; set; }
+    
+    internal ObReply() { }
 
     public ObReply(string id) {
         Id = id;
