@@ -101,7 +101,7 @@ public class OneBotClient : IDisposable, IAsyncDisposable {
                     if (_retryRest == TimeSpan.Zero) {
                         throw new WebSocketException($"connection failed after {_retryTimes} retries");
                     }
-                    
+
                     if (_logger.IsEnabled(LogLevel.Error)) {
                         _logger.LogError(
                             "connection failed after {max} retries, retry scheduled after {rest} seconds",
@@ -129,7 +129,7 @@ public class OneBotClient : IDisposable, IAsyncDisposable {
         if (!IsConnected) {
             return;
         }
-        
+
         if (_logger.IsEnabled(LogLevel.Information)) {
             _logger.LogInformation("websocket connection closed by client");
         }
@@ -221,20 +221,38 @@ public class OneBotClient : IDisposable, IAsyncDisposable {
                 emg.Message = _messagePacker.UnpackArrayMessages(emg, json.GetProperty("message"));
 
                 emg.QuickOptInvoker = async o => await Apis.HandleQuickOperation(emg, o);
-                
+
                 ev = emg;
             }
         } else if (postType == "meta_event") {
             string? metaEventType = json.GetProperty("meta_event_type").GetString();
 
             if (metaEventType == "lifecycle") {
-                string? subType =  json.GetProperty("sub_type").GetString();
+                string? subType = json.GetProperty("sub_type").GetString();
 
                 if (subType == "connect") {
                     ev = json.Deserialize<EventConnect>(JsonOptions.SnakeCaseInstance)!;
                 }
             } else if (metaEventType == "heartbeat") {
                 ev = json.Deserialize<EventHeartbeat>(JsonOptions.SnakeCaseInstance)!;
+            }
+        } else if (postType == "notice") {
+            string? noticeType = json.GetProperty("notice_type").GetString();
+
+            if (noticeType == "notify") {
+                string? subType = json.GetProperty("sub_type").GetString();
+
+                if (subType == "poke") {
+                    if (json.TryGetProperty("group_id", out JsonElement _)) {
+                        ev = json.Deserialize<EventPokeGroup>(JsonOptions.SnakeCaseInstance)!;
+                    } else {
+                        ev = json.Deserialize<EventPokeFriend>(JsonOptions.SnakeCaseInstance)!;
+                    }
+                }
+            } else if (noticeType == "group_increase") {
+                ev = json.Deserialize<EventGroupMemberIncrease>(JsonOptions.SnakeCaseInstance)!;
+            } else if (noticeType == "group_decrease") {
+                ev = json.Deserialize<EventGroupMemberDecrease>(JsonOptions.SnakeCaseInstance)!;
             }
         }
 

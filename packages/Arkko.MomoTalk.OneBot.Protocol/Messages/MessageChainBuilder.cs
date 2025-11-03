@@ -3,7 +3,7 @@
 public class MessageChainBuilder {
     private readonly List<MessageBase> _messages = [];
 
-    public MessageChainBuilder AppendAll(params MessageBase[] messages) {
+    public MessageChainBuilder AppendAll(params IEnumerable<MessageBase> messages) {
         _messages.AddRange(messages);
 
         return this;
@@ -17,6 +17,10 @@ public class MessageChainBuilder {
 
     public MessageChainBuilder Text(string text) {
         return Append(new ObText(text));
+    }
+
+    public MessageChainBuilder LineBreak() {
+        return Text("\n");
     }
 
     public MessageChainBuilder Image(byte[] image) {
