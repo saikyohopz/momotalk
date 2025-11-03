@@ -23,9 +23,9 @@ public class OneBotEventHandlerRepository {
         RegisterEvent((EventFriendRecall ev) => EventFriendRecall?.Invoke(momoTalk, ev));
         RegisterEvent((EventGroupAdmin ev) => EventGroupAdmin?.Invoke(momoTalk, ev));
         RegisterEvent((EventGroupBan ev) => EventGroupBan?.Invoke(momoTalk, ev));
-        RegisterEvent((EventGroupMemberDecrease ev) => EventGroupDecrease?.Invoke(momoTalk, ev));
+        RegisterEvent((EventGroupMemberDecrease ev) => EventGroupMemberDecrease?.Invoke(momoTalk, ev));
         RegisterEvent((EventGroupHonorChange ev) => EventGroupHonorChange?.Invoke(momoTalk, ev));
-        RegisterEvent((EventGroupMemberIncrease ev) => EventGroupIncrease?.Invoke(momoTalk, ev));
+        RegisterEvent((EventGroupMemberIncrease ev) => EventGroupMemberIncrease?.Invoke(momoTalk, ev));
         RegisterEvent((EventGroupLuckyKing ev) => EventGroupLuckyKing?.Invoke(momoTalk, ev));
         RegisterEvent((EventPokeGroup ev) => EventPokeGroup?.Invoke(momoTalk, ev));
         RegisterEvent((EventPokeFriend ev) => EventPokeFriend?.Invoke(momoTalk, ev));
@@ -45,9 +45,9 @@ public class OneBotEventHandlerRepository {
     public event ObAsyncEventHandler<EventFriendRecall>? EventFriendRecall;
     public event ObAsyncEventHandler<EventGroupAdmin>? EventGroupAdmin;
     public event ObAsyncEventHandler<EventGroupBan>? EventGroupBan;
-    public event ObAsyncEventHandler<EventGroupMemberDecrease>? EventGroupDecrease;
+    public event ObAsyncEventHandler<EventGroupMemberDecrease>? EventGroupMemberDecrease;
     public event ObAsyncEventHandler<EventGroupHonorChange>? EventGroupHonorChange;
-    public event ObAsyncEventHandler<EventGroupMemberIncrease>? EventGroupIncrease;
+    public event ObAsyncEventHandler<EventGroupMemberIncrease>? EventGroupMemberIncrease;
     public event ObAsyncEventHandler<EventGroupLuckyKing>? EventGroupLuckyKing;
     public event ObAsyncEventHandler<EventPokeGroup>? EventPokeGroup;
     public event ObAsyncEventHandler<EventPokeFriend>? EventPokeFriend;
