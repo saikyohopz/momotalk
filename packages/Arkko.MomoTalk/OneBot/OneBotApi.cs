@@ -6,8 +6,8 @@ using Arkko.MomoTalk.OneBot.Protocol.Models;
 namespace Arkko.MomoTalk.OneBot;
 
 public class OneBotApi(OneBotClient client) {
-    public async Task<ObMessageId> SendPrivateMessage(long userId, MessageChain messageChain) {
-        return await client.SendApiRequestAsync<ObMessageId>(
+    public async Task<ObMessageId?> SendPrivateMessage(long userId, MessageChain messageChain) {
+        return await client.SendApiRequestAsync<ObMessageId?>(
             new ApiRequest("send_private_msg", new {
                 UserId = userId,
                 Message = MessagePacker.PackArrayMessages(messageChain),
@@ -15,8 +15,8 @@ public class OneBotApi(OneBotClient client) {
         );
     }
 
-    public async Task<ObMessageId> SendGroupMessage(long groupId, MessageChain messageChain) {
-        return await client.SendApiRequestAsync<ObMessageId>(
+    public async Task<ObMessageId?> SendGroupMessage(long groupId, MessageChain messageChain) {
+        return await client.SendApiRequestAsync<ObMessageId?>(
             new ApiRequest("send_group_msg", new {
                 GroupId = groupId,
                 Message = MessagePacker.PackArrayMessages(messageChain),
@@ -24,10 +24,10 @@ public class OneBotApi(OneBotClient client) {
         );
     }
 
-    public async Task<ObMessageId> SendMessage(
-        MessageType messageType, long userId, long groupId, MessageChain messageChain, bool autoEscape = false
+    public async Task<ObMessageId?> SendMessage(
+        MessageType messageType, long? userId, long? groupId, MessageChain messageChain, bool autoEscape = false
     ) {
-        return await client.SendApiRequestAsync<ObMessageId>(
+        return await client.SendApiRequestAsync<ObMessageId?>(
             new ApiRequest("send_msg", new {
                 MessageType = messageType.ToString().ToLower(),
                 UserId = userId,
