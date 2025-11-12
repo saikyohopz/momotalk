@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Arkko.MomoTalk.OneBot.Proto
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Arkko.MomoTalk.Foundation", "..\Arkko.MomoTalk.Foundation\Arkko.MomoTalk.Foundation.csproj", "{DB74F271-852E-4D6D-919D-B42F4E66FAC5}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Arkko.MomoTalk.Hosting", "..\Arkko.MomoTalk.Hosting\Arkko.MomoTalk.Hosting.csproj", "{80C5316B-B33D-4A2A-BE3D-5AD82B9E6C6E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -69,6 +71,18 @@ Global
 		{DB74F271-852E-4D6D-919D-B42F4E66FAC5}.Release|x64.Build.0 = Release|Any CPU
 		{DB74F271-852E-4D6D-919D-B42F4E66FAC5}.Release|x86.ActiveCfg = Release|Any CPU
 		{DB74F271-852E-4D6D-919D-B42F4E66FAC5}.Release|x86.Build.0 = Release|Any CPU
+		{80C5316B-B33D-4A2A-BE3D-5AD82B9E6C6E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{80C5316B-B33D-4A2A-BE3D-5AD82B9E6C6E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{80C5316B-B33D-4A2A-BE3D-5AD82B9E6C6E}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{80C5316B-B33D-4A2A-BE3D-5AD82B9E6C6E}.Debug|x64.Build.0 = Debug|Any CPU
+		{80C5316B-B33D-4A2A-BE3D-5AD82B9E6C6E}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{80C5316B-B33D-4A2A-BE3D-5AD82B9E6C6E}.Debug|x86.Build.0 = Debug|Any CPU
+		{80C5316B-B33D-4A2A-BE3D-5AD82B9E6C6E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{80C5316B-B33D-4A2A-BE3D-5AD82B9E6C6E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{80C5316B-B33D-4A2A-BE3D-5AD82B9E6C6E}.Release|x64.ActiveCfg = Release|Any CPU
+		{80C5316B-B33D-4A2A-BE3D-5AD82B9E6C6E}.Release|x64.Build.0 = Release|Any CPU
+		{80C5316B-B33D-4A2A-BE3D-5AD82B9E6C6E}.Release|x86.ActiveCfg = Release|Any CPU
+		{80C5316B-B33D-4A2A-BE3D-5AD82B9E6C6E}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

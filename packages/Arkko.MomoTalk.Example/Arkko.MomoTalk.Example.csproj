@@ -8,7 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Arkko.MomoTalk\Arkko.MomoTalk.csproj" />
+    <ProjectReference Include="..\Arkko.MomoTalk.Hosting\Arkko.MomoTalk.Hosting.csproj" />
   </ItemGroup>
 
   <ItemGroup>

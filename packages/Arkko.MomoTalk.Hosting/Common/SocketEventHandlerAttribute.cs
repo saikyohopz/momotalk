@@ -1,6 +1,6 @@
 ﻿using JetBrains.Annotations;
 
-namespace Arkko.MomoTalk.Common;
+namespace Arkko.MomoTalk.Hosting.Common;
 
 [AttributeUsage(AttributeTargets.Method)]
 [MeansImplicitUse]

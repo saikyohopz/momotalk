@@ -7,8 +7,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Arkko.MomoTalk.Foundation\Arkko.MomoTalk.Foundation.csproj" />
-    <ProjectReference Include="..\Arkko.MomoTalk.OneBot.Protocol\Arkko.MomoTalk.OneBot.Protocol.csproj" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.10" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Arkko.MomoTalk\Arkko.MomoTalk.csproj" />
   </ItemGroup>
 
 </Project>

@@ -1,5 +1,5 @@
-﻿using Arkko.MomoTalk.Common;
-using Arkko.MomoTalk.Hosting;
+﻿using Arkko.MomoTalk.Hosting.Attributes;
+using Arkko.MomoTalk.Hosting.Common;
 using Arkko.MomoTalk.OneBot.Protocol.Events;
 using Arkko.MomoTalk.OneBot.Protocol.Messages;
 
@@ -15,19 +15,26 @@ public class EventService {
     [SocketEventHandler]
     private async static Task OnPrivateMessageEvent(MomoTalk momoTalk, EventMessagePrivate ev) {
         if (ev.UserId == 1781176460) {
-            await ev.ReplyAsync(ev.Message);
+            // await ev.ReplyAsync(ev.Message);
             // await SendMutsumi(momoTalk);
         }
     }
 
     [MessageCommandMapping("echo")]
-    public static MessageChain CommandEcho(MomoTalk momoTalk, MessageChain messageChain) {
-        return messageChain;
+    public async static Task<MessageChain> CommandEcho(MomoTalk momoTalk, List<MessageBase> args) {
+        await Task.Delay(1000);
+
+        return MessageChain.Builder.AppendAll(args).Build();
     }
 
     [MessageCommandMapping("hello")]
     public static string CommandHello(MomoTalk momoTalk, string name) {
         return $"hello, {name}";
+    }
+
+    [MessageCommandMapping("image")]
+    public static byte[] CommandImage(MomoTalk momoTalk, byte[] image, int a) {
+        return image;
     }
 
     private async static Task SendMutsumi(MomoTalk momoTalk) {

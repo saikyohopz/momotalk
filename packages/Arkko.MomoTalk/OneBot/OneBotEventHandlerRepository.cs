@@ -6,7 +6,7 @@ namespace Arkko.MomoTalk.OneBot;
 
 [UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
 public class OneBotEventHandlerRepository {
-    private readonly Dictionary<Type, Action<EventBase>> _eventInvokers = [];
+    private readonly Dictionary<Type, Func<EventBase, Task?>> _eventInvokers = [];
 
     private readonly ILogger<OneBotEventHandlerRepository> _logger;
 
@@ -56,15 +56,19 @@ public class OneBotEventHandlerRepository {
     public event ObAsyncEventHandler<EventRequestFriend>? EventRequestFriend;
     public event ObAsyncEventHandler<EventRequestGroup>? EventRequestGroup;
 
-    private void RegisterEvent<TEvent>(Action<TEvent> invoker) where TEvent : EventBase {
+    private void RegisterEvent<TEvent>(Func<TEvent, Task?> invoker) where TEvent : EventBase {
         _eventInvokers[typeof(TEvent)] = ev => invoker.Invoke((TEvent)ev);
     }
 
     internal void PostEvent(EventBase ev) {
-        Task.Run(() => {
+        Task.Run(async () => {
             try {
-                if (_eventInvokers.TryGetValue(ev.GetType(), out Action<EventBase>? invoker)) {
-                    invoker.Invoke(ev);
+                if (_eventInvokers.TryGetValue(ev.GetType(), out Func<EventBase, Task?>? invoker)) {
+                    Task? t = invoker.Invoke(ev);
+
+                    if (t != null) {
+                        await t;
+                    }
                 } else {
                     if (_logger.IsEnabled(LogLevel.Warning)) {
                         _logger.LogWarning("event {} is not registered but pushed to invoker", ev.GetType().Name);

@@ -9,13 +9,13 @@ public class MomoTalkHostedService(
 ) : IHostedService {
     public Task StartAsync(CancellationToken cancellationToken) {
         botCollectionService.ConnectAll();
-        
+
         return Task.CompletedTask;
     }
 
     public Task StopAsync(CancellationToken cancellationToken) {
         botCollectionService.CloseAll();
-        
+
         return Task.CompletedTask;
     }
 }

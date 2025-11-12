@@ -1,6 +1,6 @@
 ﻿using Arkko.MomoTalk.OneBot.Protocol.Messages;
 
-namespace Arkko.MomoTalk.Conversion;
+namespace Arkko.MomoTalk.Hosting.Conversions;
 
 public class ObTextMessageConverter<TOut> : IMessageConverter<ObText, TOut> {
     public TOut ConvertMessage(ObText message) {
@@ -10,10 +10,10 @@ public class ObTextMessageConverter<TOut> : IMessageConverter<ObText, TOut> {
             if (Enum.TryParse(outType, message.Text, true, out object? converted)) {
                 return (TOut)converted;
             }
-            
+
             throw new InvalidCastException("bad enum value");
         }
-        
+
         return (TOut)Convert.ChangeType(message.Text, typeof(TOut));
     }
 }

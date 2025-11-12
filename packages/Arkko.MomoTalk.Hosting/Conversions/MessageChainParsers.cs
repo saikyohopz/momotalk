@@ -1,6 +1,6 @@
 ﻿using Arkko.MomoTalk.OneBot.Protocol.Messages;
 
-namespace Arkko.MomoTalk.Conversion;
+namespace Arkko.MomoTalk.Hosting.Conversions;
 
 public static class MessageChainParsers {
     public class FromSelf : IMessageChainParser<MessageChain> {
@@ -18,6 +18,12 @@ public static class MessageChainParsers {
     public class FromMessage : IMessageChainParser<MessageBase> {
         public MessageChain Parse(MessageBase o) {
             return MessageChain.Builder.Append(o).Build();
+        }
+    }
+
+    public class ByteArrayToImage : IMessageChainParser<byte[]> {
+        public MessageChain Parse(byte[] o) {
+            return MessageChain.Builder.Image(o).Build();
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Arkko.MomoTalk.Hosting.Attributes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Arkko.MomoTalk.Hosting.Services;
 

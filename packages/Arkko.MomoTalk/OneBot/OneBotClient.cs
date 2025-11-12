@@ -1,5 +1,4 @@
 ﻿using Arkko.MomoTalk.Foundation.Utils;
-using Arkko.MomoTalk.Hosting;
 using Arkko.MomoTalk.OneBot.Protocol.Events;
 using Arkko.MomoTalk.OneBot.Protocol.Messages;
 using Arkko.MomoTalk.OneBot.Protocol.Models;
@@ -13,32 +12,26 @@ using System.Text.Json;
 namespace Arkko.MomoTalk.OneBot;
 
 public class OneBotClient : IDisposable, IAsyncDisposable {
-    private ClientWebSocket _client;
+    private readonly ConcurrentDictionary<string, ApiTask> _apiTasks;
 
     private readonly ILogger<OneBotClient> _logger;
 
-    private readonly Uri _uri;
+    private readonly MessagePacker _messagePacker;
+
+    private readonly TimeSpan _retryRest;
 
     private readonly int _retryTimes;
 
     private readonly TimeSpan _retryWait;
 
-    private readonly TimeSpan _retryRest;
+    private readonly Uri _uri;
+
+    private ClientWebSocket _client;
 
     /// <summary>
     /// 连接Task，关闭连接后该字段将会被复原为未完成的状态
     /// </summary>
     private TaskCompletionSource _connectionTask;
-
-    private readonly MessagePacker _messagePacker;
-
-    private readonly ConcurrentDictionary<string, ApiTask> _apiTasks;
-
-    public bool IsConnected => _client.State == WebSocketState.Open;
-
-    public OneBotApi Apis { get; }
-
-    public OneBotEventHandlerRepository EventHandlers { get; }
 
     public OneBotClient(
         string url,
@@ -68,6 +61,23 @@ public class OneBotClient : IDisposable, IAsyncDisposable {
         }
 
         _client.Options.KeepAliveInterval = wsHeartbeat;
+    }
+
+    public bool IsConnected => _client.State == WebSocketState.Open;
+
+    public OneBotApi Apis { get; }
+
+    public OneBotEventHandlerRepository EventHandlers { get; }
+
+    public ValueTask DisposeAsync() {
+        GC.SuppressFinalize(this);
+        _client.Dispose();
+        return ValueTask.CompletedTask;
+    }
+
+    public void Dispose() {
+        GC.SuppressFinalize(this);
+        _client.Dispose();
     }
 
     private void ResetClientWebSocket() {
@@ -290,16 +300,5 @@ public class OneBotClient : IDisposable, IAsyncDisposable {
         );
 
         return await apiTask.GetDeserializedResultAsync<TResponse>();
-    }
-
-    public void Dispose() {
-        GC.SuppressFinalize(this);
-        _client.Dispose();
-    }
-
-    public ValueTask DisposeAsync() {
-        GC.SuppressFinalize(this);
-        _client.Dispose();
-        return ValueTask.CompletedTask;
     }
 }

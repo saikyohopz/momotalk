@@ -1,10 +1,23 @@
 ﻿using JetBrains.Annotations;
 
-namespace Arkko.MomoTalk.Common;
+namespace Arkko.MomoTalk.Hosting.Common;
 
 [AttributeUsage(AttributeTargets.Method)]
 [MeansImplicitUse]
 public class MessageCommandMappingAttribute : Attribute {
+    public MessageCommandMappingAttribute(string alias) {
+        Aliases = [alias];
+    }
+
+    public MessageCommandMappingAttribute(
+        string[] aliases, string description = "", string example = "", bool hiddenFromHelp = false
+    ) {
+        Aliases = aliases;
+        Description = description;
+        Example = example;
+        HiddenFromHelp = hiddenFromHelp;
+    }
+
     /// <summary>
     /// 调用方式
     /// </summary>
@@ -23,18 +36,5 @@ public class MessageCommandMappingAttribute : Attribute {
     /// <summary>
     /// 是否从帮助列表中隐藏
     /// </summary>
-    public bool HiddenFromHelp { get; set; } = false;
-
-    public MessageCommandMappingAttribute(params string[] aliases) {
-        Aliases = aliases;
-    }
-
-    public MessageCommandMappingAttribute(
-        string[] aliases, string description = "", string example = "", bool hiddenFromHelp = false
-    ) {
-        Aliases = aliases;
-        Description = description;
-        Example = example;
-        HiddenFromHelp = hiddenFromHelp;
-    }
+    public bool HiddenFromHelp { get; set; }
 }

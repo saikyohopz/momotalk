@@ -1,4 +1,5 @@
 ﻿using Arkko.MomoTalk.Foundation.Utils;
+using Arkko.MomoTalk.Hosting.Attributes;
 using Arkko.MomoTalk.Hosting.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -9,11 +10,9 @@ namespace Arkko.MomoTalk.Hosting;
 
 public static class HostingExtensions {
     public static IHostApplicationBuilder UseMomoTalk(
-        this IHostApplicationBuilder builder, params MomoTalkConfig[] configs
+        this IHostApplicationBuilder builder, params IEnumerable<MomoTalkConfig> configs
     ) {
-        builder.Services
-            .AddScopedByAttribute()
-            .AddSingletonByAttribute()
+        AddSingletonByAttribute(AddScopedByAttribute(builder.Services))
             .AddHostedService<MomoTalkHostedService>()
             .AddSingleton(sp => {
                 ILoggerFactory loggerFactory = sp.GetService<ILoggerFactory>() ?? new NullLoggerFactory();
@@ -21,16 +20,16 @@ public static class HostingExtensions {
                 botCollectionService.CreateBot(configs);
                 return botCollectionService;
             });
-        
+
         return builder;
     }
 
     public static IServiceCollection AddScopedByAttribute(this IServiceCollection builder) {
-        return builder.DoSomethingByAttribute<ScopedAttribute>(t => builder.AddScoped(t));
+        return DoSomethingByAttribute<ScopedAttribute>(builder, t => builder.AddScoped(t));
     }
 
     public static IServiceCollection AddSingletonByAttribute(this IServiceCollection builder) {
-        return builder.DoSomethingByAttribute<SingletonAttribute>(t => builder.AddSingleton(t));
+        return DoSomethingByAttribute<SingletonAttribute>(builder, t => builder.AddSingleton(t));
     }
 
     private static IServiceCollection DoSomethingByAttribute<TAttribute>(

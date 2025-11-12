@@ -6,9 +6,9 @@ using System.Text.Json;
 namespace Arkko.MomoTalk.OneBot.Protocol.Messages;
 
 public class MessagePacker {
-    private readonly ILogger<MessagePacker> _logger;
-
     private readonly Dictionary<string, MessageBase> _factories = [];
+
+    private readonly ILogger<MessagePacker> _logger;
 
     public MessagePacker(ILoggerFactory loggerFactory) {
         _logger = loggerFactory.CreateLogger<MessagePacker>();
@@ -21,8 +21,8 @@ public class MessagePacker {
             ConstructorInfo? ctor = type.GetConstructor(BindingFlags.NonPublic | BindingFlags.Instance, []);
 
             if (ctor == null) {
-                if (_logger.IsEnabled(LogLevel.Warning)) {
-                    _logger.LogWarning("unable to find no-param constructor for {}", type);
+                if (_logger.IsEnabled(LogLevel.Trace)) {
+                    _logger.LogTrace("unable to find no-param constructor for {}", type);
                 }
 
                 continue;

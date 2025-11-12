@@ -21,7 +21,7 @@ public class MomoTalk {
         );
     }
 
-    internal OneBotClient OneBot { get; }
+    public OneBotClient OneBot { get; }
 
     public long BotId {
         get => !OneBot.IsConnected ? throw new WebSocketException("bot not connected") : field;

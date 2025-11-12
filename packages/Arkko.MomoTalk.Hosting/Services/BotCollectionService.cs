@@ -4,11 +4,11 @@ using System.Collections.Concurrent;
 namespace Arkko.MomoTalk.Hosting.Services;
 
 public class BotCollectionService {
-    private readonly ConcurrentBag<MomoTalk> _registeredBots = [];
-
     private readonly ConcurrentDictionary<long, MomoTalk> _connectedBots = [];
 
     private readonly ILoggerFactory _loggerFactory;
+
+    private readonly ConcurrentBag<MomoTalk> _registeredBots = [];
 
     private readonly IServiceProvider _serviceProvider;
 
@@ -30,7 +30,7 @@ public class BotCollectionService {
         Task.WaitAll(tasks);
     }
 
-    public void CreateBot(params MomoTalkConfig[] configs) {
+    public void CreateBot(params IEnumerable<MomoTalkConfig> configs) {
         foreach (MomoTalkConfig config in configs) {
             MomoTalk momoTalk = new(config, _loggerFactory);
 

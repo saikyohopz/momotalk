@@ -5,6 +5,13 @@ using System.Text.Json;
 namespace Arkko.MomoTalk.OneBot.Protocol.Messages;
 
 public class ObImage : MessageBase {
+    // todo type, cache, proxy, timeout
+
+    public ObImage(byte[] bytes) {
+        File = "base64://" + Convert.ToBase64String(bytes);
+    }
+
+    internal ObImage() { }
     internal override string TypeId => "image";
 
     /// <summary>
@@ -27,14 +34,6 @@ public class ObImage : MessageBase {
     /// </summary>
     public string? Url { get; set; }
 
-    // todo type, cache, proxy, timeout
-
-    public ObImage(byte[] bytes) {
-        File = "base64://" + Convert.ToBase64String(bytes);
-    }
-
-    internal ObImage() { }
-
     public override string ToContentString() {
         return SubType switch {
             1 => "[动画表情]",
@@ -52,7 +51,7 @@ public class ObImage : MessageBase {
         JsonElement data = j.GetProperty("data");
 
         return [
-            new ObImage() {
+            new ObImage {
                 File = data.GetProperty("file").GetString() ?? "",
                 Type = data.GetPropertyOrNull("type")?.GetString(),
                 Url = data.GetProperty("url").GetString() ?? "",

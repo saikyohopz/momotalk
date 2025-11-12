@@ -1,4 +1,4 @@
-﻿namespace Arkko.MomoTalk.Common;
+﻿namespace Arkko.MomoTalk.Hosting.Common;
 
 public struct MessageCommandInfo {
     /// <summary>
@@ -22,7 +22,7 @@ public struct MessageCommandInfo {
     public bool HiddenFromHelp { get; set; }
 
     public MessageCommandInfo(
-        string[] aliases, string description = "没有描述", string example = "", bool hiddenFromHelp = false
+        string[] aliases, string description = "", string example = "", bool hiddenFromHelp = false
     ) {
         Aliases = aliases;
         Description = description;

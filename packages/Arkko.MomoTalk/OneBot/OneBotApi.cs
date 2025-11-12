@@ -7,7 +7,7 @@ namespace Arkko.MomoTalk.OneBot;
 
 public class OneBotApi(OneBotClient client) {
     internal OneBotClient Client => client;
-    
+
     public async Task<ObMessageId?> SendPrivateMessage(long userId, MessageChain messageChain) {
         return await client.SendApiRequestAsync<ObMessageId?>(
             new ApiRequest("send_private_msg", new {
@@ -136,7 +136,7 @@ public class OneBotApi(OneBotClient client) {
             new ApiRequest(".handle_quick_operation", new {
                 Context = context,
                 Operation = operation,
-            })
+            }), true
         );
     }
 }
