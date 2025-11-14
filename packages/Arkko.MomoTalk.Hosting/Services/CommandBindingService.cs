@@ -143,6 +143,7 @@ public class CommandBindingService {
     private void RegisterMessageConverter<TMessage, TOut>(IMessageConverter<TMessage, TOut> converter)
     where TMessage : MessageBase {
         _converters[typeof(TOut)] = converter;
+        _converters[typeof(TOut?)] = converter;
     }
 
     private void RegisterReturnValueParser(Type returnType, IMessageChainParser parser) {
