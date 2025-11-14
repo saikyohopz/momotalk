@@ -88,17 +88,43 @@ public class CommandBindingService {
                 fn = CreateStrongTypedExpressionDelegate(method, service);
             }
 
-            MessageCommandMappingAttribute attribute = method.GetCustomAttribute<MessageCommandMappingAttribute>()!;
+            MessageCommandMappingAttribute mappingAttribute
+                = method.GetCustomAttribute<MessageCommandMappingAttribute>()!;
+
+            string category = "default";
+
+            MessageCommandCategoryAttribute? categoryAttribute
+                = method.GetCustomAttribute<MessageCommandCategoryAttribute>();
+
+            if (categoryAttribute != null) {
+                category = categoryAttribute.Category;
+            } else {
+                MessageCommandCategoryAttribute? classCategoryAttribute
+                    = method.DeclaringType?.GetCustomAttribute<MessageCommandCategoryAttribute>();
+
+                if (classCategoryAttribute != null) {
+                    category = classCategoryAttribute.Category;
+                }
+            }
 
             MessageCommandInfo info = new() {
-                Aliases = attribute.Aliases,
-                Description = attribute.Description,
-                Example = attribute.Example,
-                HiddenFromHelp = attribute.HiddenFromHelp,
+                Category = category,
+                Aliases = mappingAttribute.Aliases,
+                Description = mappingAttribute.Description,
+                Example = mappingAttribute.Example,
+                HiddenFromHelp = mappingAttribute.HiddenFromHelp,
             };
 
             RegisterCommand(info, fn, method.GetParameters());
         }
+
+        RegisterCommand(new MessageCommandInfo {
+            Category = "default",
+            Aliases = ["help"],
+            Description = "获取指令帮助",
+            Example = "",
+            HiddenFromHelp = false,
+        }, (string? category) => BuildHelpCommandText(category ?? "default"));
     }
 
     private void RegisterCommand(MessageCommandInfo info, Delegate fn, ParameterInfo[] parameterInfos) {
@@ -107,6 +133,10 @@ public class CommandBindingService {
         foreach (string alias in info.Aliases) {
             _commands[alias] = command;
         }
+    }
+
+    private void RegisterCommand(MessageCommandInfo info, Delegate fn) {
+        RegisterCommand(info, fn, fn.Method.GetParameters());
     }
 
     private void RegisterMessageConverter<TMessage, TOut>(IMessageConverter<TMessage, TOut> converter)
@@ -452,6 +482,30 @@ public class CommandBindingService {
         if (!string.IsNullOrWhiteSpace(command.Info.Example)) {
             sb.AppendLine().AppendLine("使用实例：").Append(command.Info.Example);
         }
+
+        return sb.ToString();
+    }
+
+    private string BuildHelpCommandText(string category) {
+        List<MessageCommandInfo> commandInfos = (
+            from command in _commands.Values
+            where command.Info.Category == category
+            select command.Info
+        ).ToList();
+
+        if (commandInfos.Count == 0) {
+            return "该类目下没有可用指令";
+        }
+
+        StringBuilder sb = new();
+
+        sb.AppendLine("可用指令：");
+
+        foreach (MessageCommandInfo commandInfo in commandInfos) {
+            sb.AppendLine($" - {string.Join("|", commandInfo.Aliases)}：{commandInfo.Description}");
+        }
+
+        sb.Append("* 指令尾随 --help 将输出指令的详细帮助");
 
         return sb.ToString();
     }

@@ -1,6 +1,8 @@
 ﻿namespace Arkko.MomoTalk.Hosting.Common;
 
 public struct MessageCommandInfo {
+    public string Category { get; set; } = "default";
+
     /// <summary>
     /// 调用方式
     /// </summary>
@@ -22,8 +24,9 @@ public struct MessageCommandInfo {
     public bool HiddenFromHelp { get; set; }
 
     public MessageCommandInfo(
-        string[] aliases, string description = "", string example = "", bool hiddenFromHelp = false
+        string category, string[] aliases, string description = "", string example = "", bool hiddenFromHelp = false
     ) {
+        Category = category;
         Aliases = aliases;
         Description = description;
         Example = example;

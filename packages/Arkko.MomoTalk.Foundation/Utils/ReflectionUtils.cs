@@ -75,7 +75,7 @@ public static class ReflectionUtils {
         if (nullableAttr != null) {
             byte flag = nullableAttr.NullableFlags.FirstOrDefault();
 
-            return flag == 1;
+            return flag == 0b10;
         }
 
         return true;
@@ -96,7 +96,7 @@ public static class ReflectionUtils {
 
         if (type == typeof(Task)) {
             await (Task)obj;
-            
+
             return null;
         }
 
@@ -108,7 +108,7 @@ public static class ReflectionUtils {
 
         if (type == typeof(ValueTask)) {
             await (ValueTask)obj;
-            
+
             return null;
         }
 

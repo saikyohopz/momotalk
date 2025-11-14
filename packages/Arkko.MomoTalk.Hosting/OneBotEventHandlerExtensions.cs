@@ -1,5 +1,5 @@
 ﻿using Arkko.MomoTalk.Foundation.Utils;
-using Arkko.MomoTalk.Hosting.Common;
+using Arkko.MomoTalk.Hosting.Attributes;
 using Arkko.MomoTalk.OneBot;
 using Arkko.MomoTalk.OneBot.Protocol.Events;
 using System.Reflection;
