@@ -196,7 +196,9 @@ public class CommandBindingService {
             messageParams.Add(replyEntity);
         }
 
-        foreach (MessageBase msg in messageChain[(commandTextIndex + 1)..]) {
+        List<MessageBase> rawMessageParams = messageChain[(commandTextIndex + 1)..];
+
+        foreach (MessageBase msg in rawMessageParams) {
             if (msg is not ObText t || !string.IsNullOrWhiteSpace(t.Text)) {
                 messageParams.Add(msg);
             }
@@ -241,12 +243,27 @@ public class CommandBindingService {
             }
 
             if (parameterType == typeof(MessageChain)) {
-                parameters[i] = ev.Message;
-                continue;
-            }
+                if (parameterInfo.GetCustomAttribute<RawParameterChainAttribute>() != null) {
+                    MessageChain chain = new(rawMessageParams);
 
-            if (parameterType == typeof(List<MessageBase>)) {
-                parameters[i] = messageParams;
+                    if (chain.FirstOrDefault().TryGet(out MessageBase? msg)
+                        && msg is ObText t
+                        && string.IsNullOrWhiteSpace(t.Text)
+                    ) {
+                        if (t.Text.Length == 1) {
+                            chain.Remove(t);
+                        } else {
+                            chain[0] = new ObText(t.Text[1..]);
+                        }
+                    }
+
+                    parameters[i] = chain;
+                } else if (parameterInfo.GetCustomAttribute<SplitParameterChainAttribute>() != null) {
+                    parameters[i] = new MessageChain(messageParams);
+                } else {
+                    parameters[i] = ev.Message;
+                }
+
                 continue;
             }
 
@@ -256,6 +273,12 @@ public class CommandBindingService {
                 try {
                     message = messageParams[currentMessageParamIndex];
                 } catch (ArgumentOutOfRangeException) {
+                    if (parameterInfo.HasDefaultValue) {
+                        parameters[i] = parameterInfo.DefaultValue;
+
+                        continue;
+                    }
+
                     if (ReflectionUtils.IsParameterNullable(parameterInfo)) {
                         continue;
                     }

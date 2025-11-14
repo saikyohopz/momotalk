@@ -1,5 +1,4 @@
 ﻿using Arkko.MomoTalk.Hosting.Attributes;
-using Arkko.MomoTalk.Hosting.Common;
 using Arkko.MomoTalk.OneBot.Protocol.Events;
 using Arkko.MomoTalk.OneBot.Protocol.Messages;
 
@@ -21,10 +20,10 @@ public class EventService {
     }
 
     [MessageCommandMapping("echo")]
-    public async static Task<MessageChain> CommandEcho(MomoTalk momoTalk, List<MessageBase> args) {
+    public async static Task<MessageChain> CommandEcho(MomoTalk momoTalk, [RawParameterChain] MessageChain args) {
         await Task.Delay(1000);
 
-        return MessageChain.Builder.AppendAll(args).Build();
+        return args;
     }
 
     [MessageCommandMapping("hello")]
