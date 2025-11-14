@@ -267,6 +267,24 @@ public class CommandBindingService {
                 continue;
             }
 
+            if (parameterInfo.GetCustomAttribute<UserIdAttribute>() != null) {
+                parameters[i] = ev.UserId;
+
+                continue;
+            }
+
+            if (parameterInfo.GetCustomAttribute<GroupIdAttribute>() != null) {
+                if (ev is EventMessageGroup emg) {
+                    parameters[i] = emg.GroupId;
+                } else if (ev is EventMessagePrivate && !ReflectionUtils.IsParameterNullable(parameterInfo)) {
+                    return;
+                } else {
+                    parameters[i] = null;
+                }
+
+                continue;
+            }
+
             if (_converters.TryGetValue(parameterType, out IMessageConverter? converter)) {
                 MessageBase message;
 
@@ -512,7 +530,7 @@ public class CommandBindingService {
     private string BuildHelpCommandText(string category) {
         List<MessageCommandInfo> commandInfos = (
             from command in _commands.Values
-            where command.Info.Category == category
+            where command.Info.Category == category && !command.Info.HiddenFromHelp
             select command.Info
         ).ToList();
 
