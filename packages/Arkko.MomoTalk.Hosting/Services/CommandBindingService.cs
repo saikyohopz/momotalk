@@ -2,6 +2,7 @@
 using Arkko.MomoTalk.Hosting.Attributes;
 using Arkko.MomoTalk.Hosting.Common;
 using Arkko.MomoTalk.Hosting.Conversions;
+using Arkko.MomoTalk.Hosting.Exceptions;
 using Arkko.MomoTalk.OneBot.Protocol.Events;
 using Arkko.MomoTalk.OneBot.Protocol.Messages;
 using Microsoft.Extensions.DependencyInjection;
@@ -268,12 +269,20 @@ public class CommandBindingService {
             }
 
             if (parameterInfo.GetCustomAttribute<UserIdAttribute>() != null) {
+                if (parameterType != typeof(long)) {
+                    throw new BadArgumentTypeException("user id can only be long and non-nullable");
+                }
+
                 parameters[i] = ev.UserId;
 
                 continue;
             }
 
             if (parameterInfo.GetCustomAttribute<GroupIdAttribute>() != null) {
+                if (parameterType != typeof(long?) && parameterType != typeof(long)) {
+                    throw new BadArgumentTypeException("group id can only be long");
+                }
+
                 if (ev is EventMessageGroup emg) {
                     parameters[i] = emg.GroupId;
                 } else if (ev is EventMessagePrivate && !ReflectionUtils.IsParameterNullable(parameterInfo)) {
