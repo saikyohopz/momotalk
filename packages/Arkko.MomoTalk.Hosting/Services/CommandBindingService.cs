@@ -2,6 +2,7 @@
 using Arkko.MomoTalk.Hosting.Attributes;
 using Arkko.MomoTalk.Hosting.Common;
 using Arkko.MomoTalk.Hosting.Conversions;
+using Arkko.MomoTalk.Hosting.Enums;
 using Arkko.MomoTalk.Hosting.Exceptions;
 using Arkko.MomoTalk.OneBot.Protocol.Events;
 using Arkko.MomoTalk.OneBot.Protocol.Messages;
@@ -168,7 +169,7 @@ public class CommandBindingService {
     }
 
     private async Task HandleMessage(MomoTalk momoTalk, EventMessage ev) {
-        if (ev.UserId != 1781176460) {
+        if (ev.UserId != 1781176460 || ev is not EventMessageGroup { GroupId: 980061010 }) {
             return;
         }
 
@@ -199,6 +200,12 @@ public class CommandBindingService {
         }
 
         List<MessageBase> rawMessageParams = messageChain[(commandTextIndex + 1)..];
+
+        if (rawMessageParams.Exists(msg => msg is ObText { Text: "--help" })) {
+            await ev.ReplyAsync(MessageChain.BuildTextMessage(BuildCommandHelpText(command)));
+
+            return;
+        }
 
         foreach (MessageBase msg in rawMessageParams) {
             if (msg is not ObText t || !string.IsNullOrWhiteSpace(t.Text)) {
@@ -295,53 +302,27 @@ public class CommandBindingService {
                 continue;
             }
 
-            if (_converters.TryGetValue(parameterType, out IMessageConverter? converter)) {
-                MessageBase message;
+            ForLoopAction action = await ParseSingleMessage(
+                ev, parameterType, parameterInfo, messageParams, parameters, i, command, ref currentMessageParamIndex
+            );
 
-                try {
-                    message = messageParams[currentMessageParamIndex];
-                } catch (ArgumentOutOfRangeException) {
-                    if (parameterInfo.HasDefaultValue) {
-                        parameters[i] = parameterInfo.DefaultValue;
+            if (action == ForLoopAction.Continue) {
+                continue;
+            }
 
-                        continue;
-                    }
+            if (action == ForLoopAction.Return) {
+                return;
+            }
 
-                    if (ReflectionUtils.IsParameterNullable(parameterInfo)) {
-                        continue;
-                    }
+            FromKeyedServicesAttribute? fromKeyedServicesAttribute
+                = parameterInfo.GetCustomAttribute<FromKeyedServicesAttribute>();
 
-                    await ev.ReplyAsync(MessageChain.BuildTextMessage($"参数过少\n{BuildCommandHelpText(command)}"));
-
-                    return;
-                }
-
-                try {
-                    parameters[i] = converter.ConvertMessage(message);
-
-                    currentMessageParamIndex++;
-                } catch (Exception ex) {
-                    if (_logger.IsEnabled(LogLevel.Trace)) {
-                        _logger.LogTrace("message conversion error: {}", ex);
-                    }
-
-                    await ev.ReplyAsync(MessageChain.BuildTextMessage(
-                        $"参数 #{currentMessageParamIndex + 1} {BuildParameterHelpText(parameterInfo, converter)} 非法\n{BuildCommandHelpText(command)}"
-                    ));
-
-                    return;
-                }
+            if (fromKeyedServicesAttribute == null) {
+                parameters[i] = serviceScope.ServiceProvider.GetRequiredService(parameterType);
             } else {
-                FromKeyedServicesAttribute? fromKeyedServicesAttribute
-                    = parameterInfo.GetCustomAttribute<FromKeyedServicesAttribute>();
-
-                if (fromKeyedServicesAttribute == null) {
-                    parameters[i] = serviceScope.ServiceProvider.GetRequiredService(parameterType);
-                } else {
-                    parameters[i] = serviceScope.ServiceProvider.GetRequiredKeyedService(
-                        parameterType, fromKeyedServicesAttribute.Key
-                    );
-                }
+                parameters[i] = serviceScope.ServiceProvider.GetRequiredKeyedService(
+                    parameterType, fromKeyedServicesAttribute.Key
+                );
             }
         }
 
@@ -370,6 +351,62 @@ public class CommandBindingService {
                 command.Fn.DynamicInvoke(parameters);
             }
         }
+    }
+
+    private Task<ForLoopAction> ParseSingleMessage(
+        EventMessage ev, Type parameterType, ParameterInfo parameterInfo,
+        List<MessageBase> messageParams, object?[] parameters, int i,
+        Command command, ref int currentMessageParamIndex
+    ) {
+        Type trueType = parameterType;
+
+        if (ReflectionUtils.IsParameterNullable(parameterInfo) && parameterType.IsGenericType) {
+            trueType = parameterType.GetGenericArguments()[0];
+        }
+
+        if (_converters.TryGetValue(trueType, out IMessageConverter? converter)) {
+            MessageBase message;
+
+            try {
+                message = messageParams[currentMessageParamIndex];
+            } catch (ArgumentOutOfRangeException) {
+                if (parameterInfo.HasDefaultValue) {
+                    parameters[i] = parameterInfo.DefaultValue;
+
+                    return Task.FromResult(ForLoopAction.Continue);
+                }
+
+                if (ReflectionUtils.IsParameterNullable(parameterInfo)) {
+                    return Task.FromResult(ForLoopAction.Continue);
+                }
+
+                ev.ReplyAsync(MessageChain.BuildTextMessage($"参数过少\n{BuildCommandHelpText(command)}"))
+                    .GetAwaiter()
+                    .GetResult();
+
+                return Task.FromResult(ForLoopAction.Return);
+            }
+
+            try {
+                parameters[i] = converter.ConvertMessage(message);
+
+                currentMessageParamIndex++;
+            } catch (Exception ex) {
+                if (_logger.IsEnabled(LogLevel.Trace)) {
+                    _logger.LogTrace("message conversion error: {}", ex);
+                }
+
+                ev.ReplyAsync(MessageChain.BuildTextMessage(
+                    $"参数 #{currentMessageParamIndex + 1} {BuildParameterHelpText(parameterInfo, converter)} 非法\n{BuildCommandHelpText(command)}"
+                )).GetAwaiter().GetResult();
+
+                return Task.FromResult(ForLoopAction.Return);
+            }
+
+            return Task.FromResult(ForLoopAction.Continue);
+        }
+
+        return Task.FromResult(ForLoopAction.DoNothing);
     }
 
     private static bool CommandNameStartsWithPrefix(string commandName) {
@@ -523,6 +560,14 @@ public class CommandBindingService {
                 continue;
             }
 
+            if (parameterInfo.GetCustomAttribute<UserIdAttribute>() != null) {
+                continue;
+            }
+
+            if (parameterInfo.GetCustomAttribute<GroupIdAttribute>() != null) {
+                continue;
+            }
+
             sb.Append($" {BuildParameterHelpText(parameterInfo, converter)}");
         }
 
@@ -531,7 +576,7 @@ public class CommandBindingService {
         }
 
         if (!string.IsNullOrWhiteSpace(command.Info.Example)) {
-            sb.AppendLine().AppendLine("使用实例：").Append(command.Info.Example);
+            sb.AppendLine().AppendLine("使用示例：").Append(command.Info.Example);
         }
 
         return sb.ToString();

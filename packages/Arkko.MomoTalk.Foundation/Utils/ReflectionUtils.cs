@@ -72,46 +72,70 @@ public static class ReflectionUtils {
             }
         }
 
-        if (nullableAttr != null) {
-            byte flag = nullableAttr.NullableFlags.FirstOrDefault();
+        byte? flag = nullableAttr?.NullableFlags.FirstOrDefault();
 
-            return flag == 0b10;
-        }
-
-        return true;
+        return flag == 0b10;
     }
 
-    public async static Task<object?> AwaitObjectAsync(object? obj) {
-        if (obj == null) {
-            return null;
+    public static bool IsParamsParameter(this ParameterInfo param) {
+        ArgumentNullException.ThrowIfNull(param);
+
+        return param.GetCustomAttribute<ParamArrayAttribute>() != null && param.ParameterType.IsValidParamsType();
+    }
+
+    private static bool IsValidParamsType(this Type type) {
+        if (type.IsValueType) {
+            return false;
         }
 
-        Type type = obj.GetType();
-
-        if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Task<>)) {
-            dynamic awaitable = obj;
-            await awaitable;
-            return awaitable.Result;
+        if (type.IsArray) {
+            return true;
         }
 
-        if (type == typeof(Task)) {
-            await (Task)obj;
+        Type? enumerableType = type.GetGenericIEnumerableType();
+        Type? elementType = enumerableType?.GetGenericArguments()[0];
 
-            return null;
+        if (elementType == null) {
+            return false;
         }
 
-        if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(ValueTask<>)) {
-            dynamic awaitable = obj;
-            await awaitable;
-            return awaitable.Result;
+        return type.HasPublicParameterlessConstructor()
+            && type.HasValidAddMethod(elementType);
+    }
+
+    private static Type? GetGenericIEnumerableType(this Type type) {
+        // 直接实现的接口 + 基类实现的接口
+        IEnumerable<Type> allInterfaces = type.GetInterfaces().Concat(
+            type.BaseType?.GetInterfaces() ?? Enumerable.Empty<Type>()
+        );
+
+        // 找到泛型 IEnumerable<T>（排除非泛型 IEnumerable）
+        return allInterfaces.FirstOrDefault(i
+            => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IEnumerable<>)
+        );
+    }
+
+    private static bool HasPublicParameterlessConstructor(this Type type) {
+        return type.GetConstructor(BindingFlags.Instance | BindingFlags.Public, Type.EmptyTypes) != null;
+    }
+
+    private static bool HasValidAddMethod(this Type type, Type elementType) {
+        MethodInfo? addMethod = type.GetMethod(
+            name: "Add",
+            bindingAttr: BindingFlags.Instance | BindingFlags.Public,
+            types: [elementType]
+        );
+
+        if (addMethod == null) {
+            addMethod = type.GetMethods(BindingFlags.Instance | BindingFlags.Public)
+                .FirstOrDefault(m =>
+                    m.Name == "Add" &&
+                    m.GetParameters().Length == 1 &&
+                    m.GetParameters()[0].ParameterType == elementType.MakeArrayType() &&
+                    m.GetParameters()[0].GetCustomAttribute<ParamArrayAttribute>() != null
+                );
         }
 
-        if (type == typeof(ValueTask)) {
-            await (ValueTask)obj;
-
-            return null;
-        }
-
-        return obj;
+        return addMethod != null;
     }
 }

@@ -26,7 +26,7 @@ public class MessageCommandMappingAttribute : Attribute {
     /// <summary>
     /// 指令描述
     /// </summary>
-    public string Description { get; set; } = "没有描述";
+    public string Description { get; set; } = string.Empty;
 
     /// <summary>
     /// 使用示例
