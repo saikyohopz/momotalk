@@ -13,4 +13,8 @@ public class MessageChain : List<MessageBase> {
     public static MessageChain BuildTextMessage(string text) {
         return Builder.Text(text).Build();
     }
+
+    public static MessageChain BuildImageMessage(byte[] image) {
+        return Builder.Image(image).Build();
+    }
 }
