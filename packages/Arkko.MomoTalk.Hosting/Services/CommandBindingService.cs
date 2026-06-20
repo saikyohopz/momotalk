@@ -120,13 +120,13 @@ public class CommandBindingService {
             RegisterCommand(info, fn, method.GetParameters());
         }
 
-        RegisterCommand(new MessageCommandInfo {
-            Category = "default",
-            Aliases = ["help"],
-            Description = "获取指令帮助",
-            Example = "",
-            HiddenFromHelp = false,
-        }, (string? category) => BuildHelpCommandText(category ?? "default"));
+        // RegisterCommand(new MessageCommandInfo {
+        //     Category = "default",
+        //     Aliases = ["help"],
+        //     Description = "获取指令帮助",
+        //     Example = "",
+        //     HiddenFromHelp = false,
+        // }, (string? category) => BuildHelpCommandText(category ?? "default"));
     }
 
     private void RegisterCommand(MessageCommandInfo info, Delegate fn, ParameterInfo[] parameterInfos) {
