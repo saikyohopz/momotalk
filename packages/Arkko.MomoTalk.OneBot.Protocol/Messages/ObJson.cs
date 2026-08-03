@@ -28,7 +28,7 @@ public class ObJson : MessageBase {
         JsonElement data = j.GetProperty("data");
 
         return [
-            new ObJson(data.GetProperty("data")),
+            new ObJson(JsonDocument.Parse(data.GetProperty("data").GetString() ?? "").RootElement),
         ];
     }
 }
