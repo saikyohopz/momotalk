@@ -45,15 +45,13 @@ public class BotCollectionService {
     }
 
     public void CloseAll() {
-        Task[] tasks = new Task[_connectedBots.Count];
+        List<Task> tasks = [];
 
-        for (int i = 0; i < _connectedBots.Count; i++) {
-            MomoTalk bot = _connectedBots[i];
-
-            tasks[i] = Task.Run(async () => {
-                await bot.CloseAsync();
-                _connectedBots.Remove(bot.BotId, out _);
-            });
+        foreach ((long botId, MomoTalk momoTalk) in _connectedBots) {
+            tasks.Add(Task.Run(async () => {
+                await momoTalk.CloseAsync();
+                _connectedBots.Remove(botId, out _);
+            }));
         }
 
         Task.WaitAll(tasks);

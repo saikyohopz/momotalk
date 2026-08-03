@@ -4,15 +4,15 @@ using System.Text.Json;
 namespace Arkko.MomoTalk.OneBot.Protocol.Messages;
 
 public class ObText : MessageBase {
-    internal override string TypeId => "text";
-
-    public string Text { get; set; } = string.Empty;
-
     internal ObText() { }
 
     public ObText(string text) {
         Text = text;
     }
+
+    internal override string TypeId => "text";
+
+    public string Text { get; set; } = string.Empty;
 
     public override string ToContentString() {
         return Text;
@@ -27,21 +27,22 @@ public class ObText : MessageBase {
     internal override MessageBase[] UnpackArrayMessageJson(EventMessage ev, in JsonElement j) {
         JsonElement data = j.GetProperty("data");
 
-        IEnumerable<string> strings = SplitAndKeepDelimiters(data.GetProperty("text").GetString() ?? string.Empty, ' ');
+        IEnumerable<string> strings
+            = SplitAndKeepDelimiters(data.GetProperty("text").GetString() ?? string.Empty, ' ', '\n');
 
         return strings.Select(MessageBase (str) => new ObText(str)).ToArray();
     }
 
-    private static List<string> SplitAndKeepDelimiters(string s, char delim) {
+    private static List<string> SplitAndKeepDelimiters(string s, params char[] delims) {
         List<string> result = [];
         if (string.IsNullOrEmpty(s))
             return result;
 
         int currentIndex = 0;
-        bool isInDelimiter = s[0] == delim;
+        bool isInDelimiter = delims.Contains(s[0]);
 
         for (int i = 1; i < s.Length; i++) {
-            bool currentIsDelimiter = s[i] == delim;
+            bool currentIsDelimiter = delims.Contains(s[i]);
 
             if (currentIsDelimiter != isInDelimiter) {
                 result.Add(s.Substring(currentIndex, i - currentIndex));

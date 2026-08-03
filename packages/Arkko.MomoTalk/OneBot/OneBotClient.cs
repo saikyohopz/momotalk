@@ -157,11 +157,16 @@ public class OneBotClient : IDisposable, IAsyncDisposable {
         for (;;) {
             try {
                 await HandleMessageEventAsync();
-            } catch (OperationCanceledException) {
+            } catch (Exception ex) when (ex is OperationCanceledException or WebSocketException) {
+                // temporarily fix
+                if (_logger.IsEnabled(LogLevel.Error)) {
+                    _logger.LogError(ex, "websocket error or operation cancelled");
+                }
+
                 break;
             } catch (Exception ex) {
                 if (_logger.IsEnabled(LogLevel.Error)) {
-                    _logger.LogError("error handling message event: {ex}", ex);
+                    _logger.LogError(ex, "error handling message event");
                 }
             }
         }
