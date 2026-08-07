@@ -26,6 +26,8 @@ public class OneBotClient : IDisposable, IAsyncDisposable {
 
     private readonly Uri _uri;
 
+    private bool _closed = false;
+
     private ClientWebSocket _client;
 
     /// <summary>
@@ -140,6 +142,8 @@ public class OneBotClient : IDisposable, IAsyncDisposable {
             return;
         }
 
+        _closed = true;
+
         if (_logger.IsEnabled(LogLevel.Information)) {
             _logger.LogInformation("websocket connection closed by client");
         }
@@ -159,7 +163,7 @@ public class OneBotClient : IDisposable, IAsyncDisposable {
                 await HandleMessageEventAsync();
             } catch (Exception ex) when (ex is OperationCanceledException or WebSocketException) {
                 // temporarily fix
-                if (_logger.IsEnabled(LogLevel.Error)) {
+                if (!_closed && _logger.IsEnabled(LogLevel.Error)) {
                     _logger.LogError(ex, "websocket error or operation cancelled");
                 }
 
