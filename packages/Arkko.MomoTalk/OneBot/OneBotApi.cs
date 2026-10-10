@@ -5,8 +5,8 @@ using Arkko.MomoTalk.OneBot.Protocol.Models;
 
 namespace Arkko.MomoTalk.OneBot;
 
-public class OneBotApi(OneBotClient client) {
-    internal OneBotClient Client => client;
+public class OneBotApi(IOneBotClient client) {
+    internal IOneBotClient Client => client;
 
     public async Task<ObMessageId?> SendPrivateMessage(long userId, MessageChain messageChain) {
         return await client.SendApiRequestAsync<ObMessageId?>(

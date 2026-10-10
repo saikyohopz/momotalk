@@ -11,7 +11,7 @@ using System.Text.Json;
 
 namespace Arkko.MomoTalk.OneBot;
 
-public class OneBotClient : IDisposable, IAsyncDisposable {
+public class OneBotClient : IOneBotClient, IDisposable, IAsyncDisposable {
     private readonly ConcurrentDictionary<string, ApiTask> _apiTasks;
 
     private readonly ILogger<OneBotClient> _logger;
@@ -26,9 +26,9 @@ public class OneBotClient : IDisposable, IAsyncDisposable {
 
     private readonly Uri _uri;
 
-    private bool _closed = false;
-
     private ClientWebSocket _client;
+
+    private bool _closed = false;
 
     /// <summary>
     /// 连接Task，关闭连接后该字段将会被复原为未完成的状态
@@ -65,10 +65,6 @@ public class OneBotClient : IDisposable, IAsyncDisposable {
         _client.Options.KeepAliveInterval = wsHeartbeat;
     }
 
-    public bool IsConnected => _client.State == WebSocketState.Open;
-
-    public OneBotApi Apis { get; }
-
     public OneBotEventHandlerRepository EventHandlers { get; }
 
     public ValueTask DisposeAsync() {
@@ -82,10 +78,9 @@ public class OneBotClient : IDisposable, IAsyncDisposable {
         _client.Dispose();
     }
 
-    private void ResetClientWebSocket() {
-        _client.Dispose();
-        _client = new ClientWebSocket();
-    }
+    public bool IsConnected => _client.State == WebSocketState.Open;
+
+    public OneBotApi Apis { get; }
 
     public async Task ConnectAsync() {
         for (int i = 1; i <= _retryTimes; i++) {
@@ -155,6 +150,28 @@ public class OneBotClient : IDisposable, IAsyncDisposable {
             "closed by client",
             CancellationToken.None
         );
+    }
+
+    public async Task<TResponse> SendApiRequestAsync<TResponse>(ApiRequest request, bool nullable = false) {
+        string req = request.SerializeJson(JsonOptions.SnakeCaseInstance);
+
+        ApiTask apiTask = new(typeof(TResponse), nullable);
+
+        _apiTasks.TryAdd(request.Echo, apiTask);
+
+        await _client.SendAsync(
+            new ArraySegment<byte>(Encoding.UTF8.GetBytes(req)),
+            WebSocketMessageType.Text,
+            true,
+            CancellationToken.None
+        );
+
+        return await apiTask.GetDeserializedResultAsync<TResponse>();
+    }
+
+    private void ResetClientWebSocket() {
+        _client.Dispose();
+        _client = new ClientWebSocket();
     }
 
     private async Task LoopHandleMessageEventAsync() {
@@ -292,22 +309,5 @@ public class OneBotClient : IDisposable, IAsyncDisposable {
         if (echo != null && _apiTasks.TryGetValue(echo, out ApiTask? apiTask)) {
             apiTask.SetResult(json.GetProperty("data"));
         }
-    }
-
-    async internal Task<TResponse> SendApiRequestAsync<TResponse>(ApiRequest request, bool nullable = false) {
-        string req = request.SerializeJson(JsonOptions.SnakeCaseInstance);
-
-        ApiTask apiTask = new(typeof(TResponse), nullable);
-
-        _apiTasks.TryAdd(request.Echo, apiTask);
-
-        await _client.SendAsync(
-            new ArraySegment<byte>(Encoding.UTF8.GetBytes(req)),
-            WebSocketMessageType.Text,
-            true,
-            CancellationToken.None
-        );
-
-        return await apiTask.GetDeserializedResultAsync<TResponse>();
     }
 }

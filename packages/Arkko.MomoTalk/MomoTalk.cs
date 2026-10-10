@@ -15,13 +15,13 @@ public class MomoTalk {
     public MomoTalk(MomoTalkConfig config, ILoggerFactory loggerFactory) {
         _logger = loggerFactory.CreateLogger<MomoTalk>();
 
-        OneBot = new OneBotClient(
+        OneBot = new OneBotClientV2(
             config.WebSocketUrl, config.Token, config.RetryTimes, config.RetryWait,
             config.RetryRest, config.WebSocketHeartbeat, loggerFactory, this
         );
     }
 
-    public OneBotClient OneBot { get; }
+    public IOneBotClient OneBot { get; }
 
     public long BotId {
         get => !OneBot.IsConnected ? throw new WebSocketException("bot not connected") : field;
